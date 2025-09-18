@@ -1,0 +1,5 @@
+{
+  "name": "FerozAI",
+  "description": "A sleek, modern chat application powered by Google's Gemini API, providing intelligent and conversational AI experiences. Built with React and Tailwind CSS.",
+  "requestFramePermissions": []
+}
