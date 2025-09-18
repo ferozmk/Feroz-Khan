@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageWrapper from '../components/PageWrapper';
 
 const LanguageOption: React.FC<{ name: string; value: string; selected: string; onChange: (value: string) => void; }> = ({ name, value, selected, onChange }) => (
@@ -17,15 +17,26 @@ const LanguageOption: React.FC<{ name: string; value: string; selected: string; 
 
 
 const LanguagePage: React.FC = () => {
-    const [selectedLanguage, setSelectedLanguage] = useState('en-US');
+    const [selectedLanguage, setSelectedLanguage] = useState('en');
+    const [saveStatus, setSaveStatus] = useState('');
+
+    useEffect(() => {
+        const savedLanguage = localStorage.getItem('languagePreference');
+        if (savedLanguage) {
+            setSelectedLanguage(savedLanguage);
+        }
+    }, []);
 
     const languages = [
-        { name: 'English (US)', value: 'en-US' },
-        { name: 'Español (Spanish)', value: 'es-ES' },
-        { name: 'Français (French)', value: 'fr-FR' },
-        { name: 'Deutsch (German)', value: 'de-DE' },
-        { name: '日本語 (Japanese)', value: 'ja-JP' },
+        { name: 'English', value: 'en' },
+        { name: 'Urdu (اردو)', value: 'ur' },
     ];
+
+    const handleSave = () => {
+        localStorage.setItem('languagePreference', selectedLanguage);
+        setSaveStatus('Saved!');
+        setTimeout(() => setSaveStatus(''), 2000);
+    };
 
   return (
     <PageWrapper title="Language">
@@ -45,8 +56,12 @@ const LanguagePage: React.FC = () => {
             ))}
         </div>
         <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
-            <button disabled className="px-6 py-2 bg-indigo-500 text-white rounded-lg cursor-not-allowed opacity-50">
-                Save Preferences
+            <button
+                onClick={handleSave}
+                disabled={!!saveStatus}
+                className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
+            >
+                {saveStatus || 'Save Preferences'}
             </button>
         </div>
       </div>

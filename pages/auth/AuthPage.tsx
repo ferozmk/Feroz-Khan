@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { GoogleIcon } from '../../components/icons/GoogleIcon';
-import { SparklesIcon } from '../../components/icons/SparklesIcon';
+import { LogoIcon } from '../../components/icons/LogoIcon';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
+  initialView?: 'login' | 'signup';
 }
 
-const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
-  const [isLoginView, setIsLoginView] = useState(false);
+const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, initialView = 'signup' }) => {
+  const [isLoginView, setIsLoginView] = useState(initialView === 'login');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +21,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
         <div className="text-center">
-            <SparklesIcon className="w-10 h-10 mx-auto text-indigo-500" />
+            <LogoIcon className="w-10 h-10 mx-auto" />
             <h1 className="mt-4 text-3xl font-bold text-gray-800 dark:text-gray-100">
                 {isLoginView ? 'Welcome Back' : 'Welcome to FerozAI'}
             </h1>

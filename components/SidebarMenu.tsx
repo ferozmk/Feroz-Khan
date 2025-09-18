@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from '../hooks/useRouter';
-import { SparklesIcon } from './icons/SparklesIcon';
+import { LogoIcon } from './icons/LogoIcon';
 import { UserIcon } from './icons/UserIcon';
 import { ImageIcon } from './icons/ImageIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
@@ -51,6 +51,12 @@ const MoonIcon: React.FC<{ className?: string }> = ({ className }) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
     </svg>
 );
+const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    </svg>
+);
+
 
 interface SidebarMenuProps {
   isSidebarOpen: boolean;
@@ -60,14 +66,16 @@ interface SidebarMenuProps {
   logout: () => void;
 }
 
-const NavLink: React.FC<{ href: string; icon: React.ReactNode; text: string; setSidebarOpen: (isOpen: boolean) => void; }> = ({ href, icon, text, setSidebarOpen }) => {
+const NavLink: React.FC<{ href: string; icon?: React.ReactNode; text: string; setSidebarOpen: (isOpen: boolean) => void; isSubLink?: boolean; }> = ({ href, icon, text, setSidebarOpen, isSubLink = false }) => {
     const { navigate, path } = useRouter();
     const isActive = path === href;
+    const padding = isSubLink ? 'pl-12 pr-3' : 'px-3';
+
     return (
         <a
             href={`#${href}`}
             onClick={(e) => { e.preventDefault(); navigate(href); setSidebarOpen(false); }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-base ${
+            className={`flex items-center gap-3 ${padding} py-2.5 rounded-lg transition-colors text-base ${
                 isActive
                     ? 'bg-indigo-500 text-white'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
@@ -76,6 +84,36 @@ const NavLink: React.FC<{ href: string; icon: React.ReactNode; text: string; set
             {icon}
             <span className="font-medium">{text}</span>
         </a>
+    );
+};
+
+const CollapsibleNavMenu: React.FC<{ icon: React.ReactNode; text: string; setSidebarOpen: (isOpen: boolean) => void; children: React.ReactNode; baseHref: string }> = ({ icon, text, setSidebarOpen, children, baseHref }) => {
+    const { path } = useRouter();
+    const isParentActive = path.startsWith(baseHref);
+    const [isOpen, setIsOpen] = useState(isParentActive);
+
+    return (
+        <div>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={`flex items-center justify-between w-full gap-3 px-3 py-2.5 rounded-lg transition-colors text-base ${
+                    isParentActive && !isOpen
+                        ? 'bg-indigo-500 text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                }`}
+            >
+                <div className="flex items-center gap-3">
+                    {icon}
+                    <span className="font-medium">{text}</span>
+                </div>
+                <ChevronDownIcon className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isOpen && (
+                <div className="pt-1 space-y-1">
+                    {children}
+                </div>
+            )}
+        </div>
     );
 };
 
@@ -105,7 +143,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isSidebarOpen, setSidebarOpen
         <div className="flex flex-col h-full">
           <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <a href="#/" onClick={(e) => { e.preventDefault(); navigate('/'); setSidebarOpen(false); }} className="flex items-center gap-2">
-              <SparklesIcon className="w-8 h-8 text-indigo-500" />
+              <LogoIcon className="w-8 h-8" />
               <span className="text-2xl font-bold text-gray-800 dark:text-gray-100">FerozAI</span>
             </a>
             <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1">
@@ -123,7 +161,17 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isSidebarOpen, setSidebarOpen
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
             <NavSectionHeader title="Tools" />
             <NavLink href="/" icon={<HomeIcon className="w-6 h-6" />} text="Chat" setSidebarOpen={setSidebarOpen} />
-            <NavLink href="/dashboard" icon={<DashboardIcon className="w-6 h-6" />} text="Dashboard" setSidebarOpen={setSidebarOpen} />
+            <CollapsibleNavMenu
+                icon={<DashboardIcon className="w-6 h-6" />}
+                text="Dashboard"
+                setSidebarOpen={setSidebarOpen}
+                baseHref="/dashboard"
+            >
+                <NavLink href="/dashboard/activity" text="User Activity" setSidebarOpen={setSidebarOpen} isSubLink />
+                <NavLink href="/dashboard/api-usage" text="API Usage" setSidebarOpen={setSidebarOpen} isSubLink />
+                <NavLink href="/dashboard/analytics" text="Content Analytics" setSidebarOpen={setSidebarOpen} isSubLink />
+                <NavLink href="/dashboard/team" text="Team Management" setSidebarOpen={setSidebarOpen} isSubLink />
+            </CollapsibleNavMenu>
             <NavLink href="/image-generator-editor" icon={<ImageIcon className="w-6 h-6" />} text="Image Generator & Editor" setSidebarOpen={setSidebarOpen} />
 
             <NavSectionHeader title="Library" />

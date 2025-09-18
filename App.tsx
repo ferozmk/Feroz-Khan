@@ -20,6 +20,10 @@ import { MenuIcon } from './components/icons/MenuIcon';
 import ImageGeneratorEditorPage from './pages/ImageGeneratorEditorPage';
 import CommunityPage from './pages/CommunityPage';
 import AboutPage from './pages/AboutPage';
+import UserActivityPage from './pages/dashboard/UserActivityPage';
+import ApiUsagePage from './pages/dashboard/ApiUsagePage';
+import ContentAnalyticsPage from './pages/dashboard/ContentAnalyticsPage';
+import TeamManagementPage from './pages/dashboard/TeamManagementPage';
 import AuthPage from './pages/auth/AuthPage';
 
 const App: React.FC = () => {
@@ -33,7 +37,14 @@ const App: React.FC = () => {
       case '/':
         return <ChatInterface />;
       case '/dashboard':
-        return <DashboardPage />;
+      case '/dashboard/activity':
+        return <UserActivityPage />;
+      case '/dashboard/api-usage':
+        return <ApiUsagePage />;
+      case '/dashboard/analytics':
+        return <ContentAnalyticsPage />;
+      case '/dashboard/team':
+        return <TeamManagementPage />;
       case '/profile':
         return <ProfilePage />;
       case '/account':

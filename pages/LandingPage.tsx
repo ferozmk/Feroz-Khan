@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SparklesIcon } from '../components/icons/SparklesIcon';
+import { LogoIcon } from '../components/icons/LogoIcon';
 import AuthPage from './auth/AuthPage';
 import { RobotIcon } from '../components/icons/RobotIcon';
 import { LandingSidebar } from '../components/LandingSidebar';
@@ -18,7 +18,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess, theme, toggleT
             // We need to wrap AuthPage to simulate the full-page experience it expects
             return (
                  <div className="w-full h-full flex items-center justify-center">
-                    <AuthPage onAuthSuccess={onAuthSuccess} />
+                    <AuthPage onAuthSuccess={onAuthSuccess} initialView={authAction} />
                  </div>
             );
         }
@@ -54,7 +54,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess, theme, toggleT
         <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 overflow-hidden">
             <main className="flex-1 flex flex-col overflow-y-auto">
                 <header className="absolute top-0 left-0 p-6 flex items-center gap-2">
-                     <SparklesIcon className="w-8 h-8 text-indigo-500" />
+                     <LogoIcon className="w-8 h-8" />
                      <span className="text-2xl font-bold text-gray-800 dark:text-gray-100">FerozAI</span>
                 </header>
                 {renderContent()}
