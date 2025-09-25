@@ -1,19 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Message, Role } from '../types';
-import { startChat, sendMessageStream } from '../services/geminiService';
+import { createChatSession, sendMessageStream } from '../services/geminiService';
 import ChatInput from './ChatInput';
 import ChatMessage from './ChatMessage';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { Chat } from '@google/genai';
+import { BookmarkIcon } from './icons/BookmarkIcon';
+import firebase from '../services/firebase';
 
-const ChatInterface: React.FC = () => {
+interface ChatInterfaceProps {
+  user: firebase.User | null;
+}
+
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ user }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [chatSession, setChatSession] = useState<Chat | null>(null);
+  const [saveStatus, setSaveStatus] = useState('Save Chat');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const initialize = () => {
-     try {
-      startChat();
+  useEffect(() => {
+    // Initialize a new, isolated chat session when the component mounts.
+    try {
+      const session = createChatSession();
+      setChatSession(session);
       setMessages([
         { role: Role.MODEL, content: "Hello! I'm FerozAI. How can I help you today?" }
       ]);
@@ -23,10 +34,6 @@ const ChatInterface: React.FC = () => {
       setError(`Initialization failed: ${err.message}`);
       console.error(err);
     }
-  }
-
-  useEffect(() => {
-    initialize();
   }, []);
 
   useEffect(() => {
@@ -34,6 +41,11 @@ const ChatInterface: React.FC = () => {
   }, [messages, isLoading]);
 
   const handleSendMessage = async (userInput: string) => {
+    if (!chatSession) {
+      setError("Chat session is not ready. Please try again.");
+      return;
+    }
+    
     setError(null);
     setIsLoading(true);
     
@@ -41,7 +53,8 @@ const ChatInterface: React.FC = () => {
     setMessages(prev => [...prev, userMessage, { role: Role.MODEL, content: '' }]);
 
     try {
-      const stream = await sendMessageStream(userInput);
+      // Pass the component's chat session to the service function.
+      const stream = await sendMessageStream(chatSession, userInput);
       let modelResponse = '';
 
       for await (const chunk of stream) {
@@ -69,10 +82,64 @@ const ChatInterface: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const handleSaveChat = () => {
+    if (!user) {
+      setError('You must be logged in to save chats.');
+      return;
+    }
+
+    if (messages.length <= 1) {
+      setSaveStatus('Cannot save empty chat');
+      setTimeout(() => setSaveStatus('Save Chat'), 2000);
+      return;
+    }
+
+    try {
+      const storageKey = `userChats_${user.uid}`;
+      const existingChatsRaw = localStorage.getItem(storageKey);
+      const existingChats = existingChatsRaw ? JSON.parse(existingChatsRaw) : [];
+      
+      const newChat = {
+        id: `chat_${Date.now()}`,
+        messages,
+        timestamp: Date.now(),
+      };
+
+      // Prepend the new chat to the beginning of the array
+      const updatedChats = [newChat, ...existingChats];
+
+      localStorage.setItem(storageKey, JSON.stringify(updatedChats));
+      
+      setSaveStatus('Saved!');
+      setTimeout(() => setSaveStatus('Save Chat'), 2000);
+
+    } catch (err) {
+      console.error("Failed to save chat to local storage:", err);
+      const errorMessage = `Failed to save chat: ${err instanceof Error ? err.message : 'An unknown error occurred'}`;
+      setError(errorMessage);
+      setSaveStatus('Save Failed');
+      setTimeout(() => setSaveStatus('Save Chat'), 2000);
+    }
+  };
   
   return (
     <>
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto relative">
+        {/* Save Chat Button Area */}
+        {messages.length > 1 && (
+            <div className="sticky top-0 z-10 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm max-w-4xl mx-auto flex justify-end p-2 border-b border-gray-200 dark:border-gray-700">
+                <button
+                    onClick={handleSaveChat}
+                    disabled={saveStatus !== 'Save Chat'}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                    aria-label="Save current chat"
+                >
+                    <BookmarkIcon className="w-4 h-4" />
+                    {saveStatus}
+                </button>
+            </div>
+        )}
         <div className="max-w-4xl mx-auto">
           {messages.map((msg, index) => (
             <ChatMessage key={index} message={msg} />
@@ -103,7 +170,6 @@ const ChatInterface: React.FC = () => {
 
       <footer className="w-full">
         <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-        <p className="text-center text-xs text-gray-500 dark:text-gray-600 p-2">Powered by Google Gemini. UI design by Feroz.</p>
       </footer>
     </>
   );

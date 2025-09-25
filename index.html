@@ -1,24 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF--8" />
+    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FerozAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+      }
+    </script>
+    <!-- TODO: Replace 'YOUR_RECAPTCHA_SITE_KEY' with your actual reCAPTCHA v3 Site Key -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY"></script>
   <script type="importmap">
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.1.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
     "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "marked": "https://aistudiocdn.com/marked@^16.3.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.2.1/"
   }
 }
 </script>
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+</style>
 </head>
   <body>
+    <div id="modal-root"></div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

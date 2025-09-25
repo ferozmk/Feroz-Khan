@@ -12,7 +12,7 @@ const AboutPage: React.FC = () => {
           Built with cutting-edge web technologies including React and Tailwind CSS, FerozAI is designed to be responsive, accessible, and a joy to use across all your devices.
         </p>
         <div>
-          <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Created by Feroz</h2>
+          <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Created by Feroz Khan</h2>
           <p>
             This application was designed and developed by Feroz, a passionate software engineer dedicated to building beautiful and functional user interfaces. The goal of FerozAI is to showcase the potential of large language models in a clean and user-friendly package.
           </p>

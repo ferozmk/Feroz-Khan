@@ -5,12 +5,11 @@ import { RobotIcon } from '../components/icons/RobotIcon';
 import { LandingSidebar } from '../components/LandingSidebar';
 
 interface LandingPageProps {
-    onAuthSuccess: () => void;
     theme: string;
     toggleTheme: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess, theme, toggleTheme }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ theme, toggleTheme }) => {
     const [authAction, setAuthAction] = useState<'login' | 'signup' | null>(null);
 
     const renderContent = () => {
@@ -18,7 +17,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess, theme, toggleT
             // We need to wrap AuthPage to simulate the full-page experience it expects
             return (
                  <div className="w-full h-full flex items-center justify-center">
-                    <AuthPage onAuthSuccess={onAuthSuccess} initialView={authAction} />
+                    <AuthPage initialView={authAction} />
                  </div>
             );
         }

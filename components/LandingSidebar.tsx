@@ -3,17 +3,8 @@ import { UserIcon } from './icons/UserIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
 import { LoginIcon } from './icons/LoginIcon';
 import { UserPlusIcon } from './icons/UserPlusIcon';
+import ThemeToggle from './ThemeToggle';
 
-const SunIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.95-4.243l-1.59-1.591M3.75 12H6m4.243-4.95l-1.59 1.59M12 12a4.5 4.5 0 000 9 4.5 4.5 0 000-9z" />
-    </svg>
-);
-const MoonIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-    </svg>
-);
 const HistoryIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -26,7 +17,7 @@ const BookmarkIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 const SettingsIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-1.04 1.226-1.263a17.932 17.932 0 011.23 0c.665.223 1.135.721 1.225 1.263l.344 2.064a1.875 1.875 0 002.329 1.516l1.91-.765c.614-.245 1.3.055 1.632.664l.97 1.681c.333.578.156 1.33-.362 1.695l-1.68 1.009a1.875 1.875 0 000 2.986l1.68 1.009c.517.365.694 1.117.362 1.695l-.97 1.681c-.332.578-1.018.909-1.632.664l-1.91-.765a1.875 1.875 0 00-2.329 1.516l-.344 2.064c-.09.542-.56 1.04-1.225 1.263a17.932 17.932 0 01-1.23 0c-.665-.223-1.135-.721-1.226-1.263l-.344-2.064a1.875 1.875 0 00-2.329-1.516l-1.91.765c-.614-.245-1.3-.055-1.632-.664l-.97-1.681c-.333-.578-.156-1.33.362-1.695l1.68-1.009a1.875 1.875 0 000-2.986l-1.68-1.009c-.517-.365-.694-1.117-.362-1.695l.97-1.681c.332-.578 1.018.909 1.632.664l1.91.765a1.875 1.875 0 002.329-1.516l.344-2.064z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-1.04 1.226-1.263a17.932 17.932 0 011.23 0c.665.223 1.135.721 1.225 1.263l.344 2.064a1.875 1.875 0 002.329 1.516l1.91-.765c.614-.245 1.3.055 1.632.664l.97 1.681c.333.578.156 1.33-.362 1.695l-1.68 1.009a1.875 1.875 0 000 2.986l1.68 1.009c.517.365.694 1.117.362 1.695l-.97 1.681c-.332.578-1.018.909-1.632.664l-1.91-.765a1.875 1.875 0 00-2.329 1.516l-.344 2.064c-.09.542-.56 1.04-1.225 1.263a17.932 17.932 0 01-1.23 0c-.665-.223-1.135-.721-1.226-1.263l-.344-2.064a1.875 1.875 0 00-2.329-1.516l-1.91.765c-.614-.245-1.3-.055-1.632.664l-.97-1.681c-.333-.578-.156-1.33.362-1.695l1.68-1.009a1.875 1.875 0 000-2.986l-1.68-1.009c-.517-.365-.694-1.117-.362-1.695l.97-1.681c.332.578 1.018.909 1.632.664l1.91.765a1.875 1.875 0 002.329-1.516l.344-2.064z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );
@@ -85,15 +76,8 @@ export const LandingSidebar: React.FC<LandingSidebarProps> = ({ onLoginClick, on
                 <FeatureLink icon={<HelpIcon className="w-6 h-6" />} text="Help / Support" />
             </nav>
 
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-               <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-900/50 p-1.5 rounded-lg">
-                    <button onClick={toggleTheme} className={`w-full flex justify-center items-center gap-2 p-1 rounded-md ${theme === 'light' ? 'bg-white dark:bg-gray-700' : ''}`}>
-                        <SunIcon className="w-5 h-5"/> Light
-                    </button>
-                    <button onClick={toggleTheme} className={`w-full flex justify-center items-center gap-2 p-1 rounded-md ${theme === 'dark' ? 'bg-white dark:bg-gray-700' : ''}`}>
-                        <MoonIcon className="w-5 h-5"/> Dark
-                    </button>
-                </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-center">
+                <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
             </div>
         </aside>
     );
