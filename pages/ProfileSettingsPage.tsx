@@ -44,40 +44,55 @@ const ProfileSettingsPage: React.FC = () => {
         fileInputRef.current?.click();
     };
 
-    // Refactored with async/await for more robust error handling and clearer flow.
-    // This prevents the infinite loading spinner issue.
-    const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    // Refactored to use the robust event-based listener for Firebase Storage v8.
+    // The `UploadTask` object is a "thenable," not a true Promise, which can cause
+    // `async/await` to hang. This `on()` method is the correct way to handle it.
+    const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !user) return;
 
         setIsUploading(true);
         setStatusMessage({ type: '', text: '' });
 
-        try {
-            // 1. Define the storage reference for the user's avatar.
-            const storageRef = storage.ref(`avatars/${user.uid}`);
-            
-            // 2. Upload the file and wait for it to complete.
-            const uploadTaskSnapshot = await storageRef.put(file);
-            
-            // 3. Get the public download URL for the uploaded file.
-            const downloadURL = await uploadTaskSnapshot.ref.getDownloadURL();
-            
-            // 4. Update the user's profile in both Firebase Auth and Realtime Database.
-            await user.updateProfile({ photoURL: downloadURL });
-            await db.ref(`users/${user.uid}`).update({ photoURL: downloadURL });
+        const storageRef = storage.ref(`avatars/${user.uid}`);
+        const uploadTask = storageRef.put(file);
 
-            // 5. Update the local state to reflect the change instantly.
-            setPhotoURL(downloadURL);
-            setStatusMessage({ type: 'success', text: 'Avatar updated successfully!' });
-        } catch (error) {
-            console.error("Error uploading avatar:", error);
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            setStatusMessage({ type: 'error', text: `Upload failed: ${errorMessage}` });
-        } finally {
-            // 6. Ensure the loading state is always turned off, even if errors occur.
-            setIsUploading(false);
-        }
+        // Listen for state changes, errors, and completion of the upload.
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                // This callback can be used to monitor upload progress.
+            },
+            (error) => {
+                // Handle unsuccessful uploads and ensure loading state is cleared.
+                console.error("Avatar upload error:", error);
+                setStatusMessage({ type: 'error', text: `Upload failed: ${error.message}` });
+                setIsUploading(false);
+            },
+            () => {
+                // Upload completed successfully. Get the download URL.
+                uploadTask.snapshot.ref.getDownloadURL().then(async (downloadURL) => {
+                    try {
+                        // Update both Firebase Auth and Realtime Database.
+                        await user.updateProfile({ photoURL: downloadURL });
+                        await db.ref(`users/${user.uid}`).update({ photoURL: downloadURL });
+
+                        // Update local state to show new avatar immediately.
+                        setPhotoURL(downloadURL);
+                        setStatusMessage({ type: 'success', text: 'Avatar updated successfully!' });
+                    } catch (updateError) {
+                        console.error("Error updating profile with new avatar:", updateError);
+                        setStatusMessage({ type: 'error', text: 'Failed to save new avatar to profile.' });
+                    } finally {
+                        // Clear loading state after all operations are done.
+                        setIsUploading(false);
+                    }
+                }).catch(urlError => {
+                    console.error("Error getting download URL:", urlError);
+                    setStatusMessage({ type: 'error', text: 'Could not retrieve image URL after upload.' });
+                    setIsUploading(false);
+                });
+            }
+        );
     };
 
     const handleSubmit = async (e: FormEvent) => {

@@ -56,15 +56,20 @@ export const generateContent = async (params: GenerateContentParameters) => {
 };
 
 // Centralized video generation functions
-export const generateVideo = async (prompt: string) => {
+export const generateVideo = async (prompt: string, image?: { imageBytes: string; mimeType: string; }) => {
     const ai = getAiClient();
-    return await ai.models.generateVideos({
+    // Use 'any' type for params to accommodate the conditional 'image' property.
+    const params: any = {
         model: 'veo-2.0-generate-001',
         prompt: prompt,
         config: {
             numberOfVideos: 1
         }
-    });
+    };
+    if (image) {
+        params.image = image;
+    }
+    return await ai.models.generateVideos(params);
 };
 
 export const getVideosOperation = async (operation: any) => {

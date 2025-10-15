@@ -73,64 +73,38 @@ const dataURLtoFile = (dataurl: string, filename: string): File | null => {
     return new File([u8arr], filename, { type: mime });
 };
 
-
-interface PromptInputWithUploadProps {
+interface PromptInputAreaProps {
     prompt: string;
     setPrompt: (value: string) => void;
-    uploadedImage: string | null;
-    setUploadedImage: (value: string | null) => void;
     isLoading: boolean;
     label: string;
     placeholder: string;
-    onImageUpload?: () => void;
+    onFilesSelected: (files: FileList) => void;
 }
 
-const PromptInputWithUpload: React.FC<PromptInputWithUploadProps> = ({
+const PromptInputArea: React.FC<PromptInputAreaProps> = ({
     prompt,
     setPrompt,
-    uploadedImage,
-    setUploadedImage,
     isLoading,
     label,
     placeholder,
-    onImageUpload
+    onFilesSelected
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            onImageUpload?.();
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setUploadedImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (event.target.files) {
+            onFilesSelected(event.target.files);
         }
+        event.target.value = ''; // Allow re-selecting the same file(s)
     };
     
     const handleUploadClick = () => fileInputRef.current?.click();
-    const handleRemoveImage = () => setUploadedImage(null);
 
     return (
         <div>
             <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
-            <div className="mt-1 flex flex-col bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm divide-y divide-gray-200 dark:divide-gray-700">
-                {uploadedImage && (
-                    <div className="p-3">
-                        <div className="relative w-24 h-24">
-                            <img src={uploadedImage} alt="Upload preview" className="h-full w-full object-cover rounded-md" />
-                            <button 
-                                onClick={handleRemoveImage}
-                                className="absolute -top-2 -right-2 bg-gray-700 text-white rounded-full p-0.5 leading-none hover:bg-gray-800 dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                aria-label="Remove image"
-                                disabled={isLoading}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                    </div>
-                )}
+            <div className="mt-1 flex flex-col bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
                 <div className="flex items-start p-1">
                     <button
                         type="button"
@@ -141,7 +115,7 @@ const PromptInputWithUpload: React.FC<PromptInputWithUploadProps> = ({
                     >
                         <PaperclipIcon className="w-6 h-6" />
                     </button>
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg, image/gif" className="hidden" disabled={isLoading} />
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg, image/webp" multiple className="hidden" disabled={isLoading} />
                     <textarea
                         id="prompt"
                         rows={3}
@@ -158,6 +132,53 @@ const PromptInputWithUpload: React.FC<PromptInputWithUploadProps> = ({
 };
 
 
+interface FileWithPreview {
+    id: string;
+    file: File;
+    previewUrl: string;
+    progress: number;
+}
+
+interface ImagePreviewGridProps {
+    files: FileWithPreview[];
+    onRemove: (id: string) => void;
+    isLoading: boolean;
+}
+
+const ImagePreviewGrid: React.FC<ImagePreviewGridProps> = ({ files, onRemove, isLoading }) => {
+    if (files.length === 0) return null;
+
+    return (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 mt-4">
+            {files.map(({ id, previewUrl, progress }) => (
+                <div key={id} className="relative aspect-square group">
+                    <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                        {progress < 100 ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center">
+                                <div className="w-3/4 bg-gray-300 dark:bg-gray-600 rounded-full h-1.5">
+                                    <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <img src={previewUrl} alt="Upload preview" className="h-full w-full object-cover" />
+                        )}
+                    </div>
+                    {progress === 100 && (
+                        <button
+                            onClick={() => onRemove(id)}
+                            className="absolute -top-2 -right-2 bg-gray-700 text-white rounded-full p-0.5 leading-none hover:bg-gray-800 dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-opacity opacity-0 group-hover:opacity-100"
+                            aria-label="Remove image"
+                            disabled={isLoading}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
+
 interface GeneratorProps {
     setFullscreenMedia: (media: { type: 'image'; url: string }) => void;
 }
@@ -166,9 +187,38 @@ const ImageGenerator: React.FC<GeneratorProps> = ({ setFullscreenMedia }) => {
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-    const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [copyStatus, setCopyStatus] = useState('Copy Link');
+
+    const handleFilesSelected = (selectedFiles: FileList) => {
+        const newFiles: FileWithPreview[] = Array.from(selectedFiles).map(file => ({
+            id: `${file.name}-${file.lastModified}-${Math.random()}`,
+            file,
+            previewUrl: '',
+            progress: 0,
+        }));
+
+        setUploadedFiles(prev => [...prev, ...newFiles]);
+
+        newFiles.forEach(newFile => {
+            const reader = new FileReader();
+            reader.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentLoaded = Math.round((event.loaded / event.total) * 100);
+                     setUploadedFiles(prev => prev.map(f => f.id === newFile.id ? { ...f, progress: percentLoaded } : f));
+                }
+            };
+            reader.onloadend = () => {
+                 setUploadedFiles(prev => prev.map(f => f.id === newFile.id ? { ...f, previewUrl: reader.result as string, progress: 100 } : f));
+            };
+            reader.readAsDataURL(newFile.file);
+        });
+    };
+    
+    const handleRemoveFile = (id: string) => {
+        setUploadedFiles(prev => prev.filter(f => f.id !== id));
+    };
 
     const handleDownload = (imageUrl: string) => {
         const link = document.createElement('a');
@@ -210,14 +260,19 @@ const ImageGenerator: React.FC<GeneratorProps> = ({ setFullscreenMedia }) => {
         setGeneratedImage(null);
 
         try {
-            if (uploadedImage) {
+            if (uploadedFiles.length > 0) {
                  // Use editing/image-to-image logic
-                const base64ImageData = uploadedImage.split(',')[1];
-                const mimeType = uploadedImage.match(/:(.*?);/)?.[1] || 'image/jpeg';
+                const imageParts = uploadedFiles.map(f => ({
+                    inlineData: {
+                        data: f.previewUrl.split(',')[1],
+                        mimeType: f.file.type
+                    }
+                }));
+
                 const response = await generateContent({
-                    model: 'gemini-2.5-flash-image-preview',
-                    contents: { parts: [{ inlineData: { data: base64ImageData, mimeType: mimeType } }, { text: prompt }] },
-                    config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+                    model: 'gemini-2.5-flash-image',
+                    contents: { parts: [{ text: prompt }, ...imageParts] },
+                    config: { responseModalities: [Modality.IMAGE] },
                 });
                 const imagePart = response.candidates?.[0]?.content?.parts.find(part => part.inlineData);
                 if (imagePart?.inlineData?.data && imagePart.inlineData.mimeType) {
@@ -247,17 +302,17 @@ const ImageGenerator: React.FC<GeneratorProps> = ({ setFullscreenMedia }) => {
 
     return (
         <div className="space-y-6">
-            <PromptInputWithUpload
+            <PromptInputArea
                 label="Prompt"
                 prompt={prompt}
                 setPrompt={setPrompt}
-                uploadedImage={uploadedImage}
-                setUploadedImage={setUploadedImage}
                 isLoading={isLoading}
                 placeholder="e.g., A futuristic cityscape at sunset..."
+                onFilesSelected={handleFilesSelected}
             />
+            <ImagePreviewGrid files={uploadedFiles} onRemove={handleRemoveFile} isLoading={isLoading} />
              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {uploadedImage ? "Describe the changes you want to make or what you'd like to generate from this image." : "Describe the image you want to create in detail. You can also upload an image to edit or use as inspiration."}
+                {uploadedFiles.length > 0 ? "Describe the changes you want to make or what you'd like to generate from the image(s)." : "Describe the image you want to create in detail. You can also upload images to edit or use as inspiration."}
             </p>
             {error && <p className="text-sm text-red-600 dark:text-red-400 p-3 bg-red-100 dark:bg-red-900/30 rounded-md">{`Error: ${error}`}</p>}
             <div className="flex justify-end">
@@ -296,11 +351,41 @@ interface EditorProps {
 
 const ImageEditor: React.FC<EditorProps> = ({ setFullscreenMedia }) => {
     const [prompt, setPrompt] = useState('');
-    const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([]);
     const [editedImage, setEditedImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copyStatus, setCopyStatus] = useState('Copy Link');
+
+    const handleFilesSelected = (selectedFiles: FileList) => {
+        const newFiles: FileWithPreview[] = Array.from(selectedFiles).map(file => ({
+            id: `${file.name}-${file.lastModified}-${Math.random()}`,
+            file,
+            previewUrl: '',
+            progress: 0,
+        }));
+
+        setUploadedFiles(prev => [...prev, ...newFiles]);
+        setEditedImage(null); // Clear previous edit on new upload
+
+        newFiles.forEach(newFile => {
+            const reader = new FileReader();
+            reader.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentLoaded = Math.round((event.loaded / event.total) * 100);
+                     setUploadedFiles(prev => prev.map(f => f.id === newFile.id ? { ...f, progress: percentLoaded } : f));
+                }
+            };
+            reader.onloadend = () => {
+                 setUploadedFiles(prev => prev.map(f => f.id === newFile.id ? { ...f, previewUrl: reader.result as string, progress: 100 } : f));
+            };
+            reader.readAsDataURL(newFile.file);
+        });
+    };
+
+    const handleRemoveFile = (id: string) => {
+        setUploadedFiles(prev => prev.filter(f => f.id !== id));
+    };
 
     const handleDownload = (imageUrl: string) => {
         const link = document.createElement('a');
@@ -332,18 +417,22 @@ const ImageEditor: React.FC<EditorProps> = ({ setFullscreenMedia }) => {
     };
 
     const handleApplyEdit = async () => {
-        if (!uploadedImage || !prompt.trim()) return;
+        if (uploadedFiles.length === 0 || !prompt.trim()) return;
         setIsLoading(true);
         setError(null);
 
         try {
-            const base64ImageData = uploadedImage.split(',')[1];
-            const mimeType = uploadedImage.match(/:(.*?);/)?.[1] || 'image/jpeg';
+            const imageParts = uploadedFiles.map(f => ({
+                inlineData: {
+                    data: f.previewUrl.split(',')[1],
+                    mimeType: f.file.type
+                }
+            }));
 
             const response = await generateContent({
-                model: 'gemini-2.5-flash-image-preview',
-                contents: { parts: [{ inlineData: { data: base64ImageData, mimeType: mimeType } }, { text: prompt }] },
-                config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+                model: 'gemini-2.5-flash-image',
+                contents: { parts: [{ text: prompt }, ...imageParts] },
+                config: { responseModalities: [Modality.IMAGE] },
             });
             
             const imagePart = response.candidates?.[0]?.content?.parts.find(part => part.inlineData);
@@ -364,19 +453,18 @@ const ImageEditor: React.FC<EditorProps> = ({ setFullscreenMedia }) => {
     
     return (
         <div className="space-y-6">
-             <PromptInputWithUpload
-                label="Upload Image & Add Instruction"
+             <PromptInputArea
+                label="Upload Image(s) & Add Instruction"
                 prompt={prompt}
                 setPrompt={setPrompt}
-                uploadedImage={uploadedImage}
-                setUploadedImage={setUploadedImage}
                 isLoading={isLoading}
                 placeholder="e.g., Add sunglasses to the person..."
-                onImageUpload={() => setEditedImage(null)}
+                onFilesSelected={handleFilesSelected}
             />
+            <ImagePreviewGrid files={uploadedFiles} onRemove={handleRemoveFile} isLoading={isLoading} />
             {error && <p className="text-sm text-red-600 dark:text-red-400 p-3 bg-red-100 dark:bg-red-900/30 rounded-md">{`Error: ${error}`}</p>}
             <div className="flex justify-end">
-                <button onClick={handleApplyEdit} disabled={!uploadedImage || !prompt.trim() || isLoading} className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button onClick={handleApplyEdit} disabled={uploadedFiles.length === 0 || !prompt.trim() || isLoading} className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">
                     {isLoading ? 'Applying...' : 'Apply Edit'}
                 </button>
             </div>
@@ -390,7 +478,7 @@ const ImageEditor: React.FC<EditorProps> = ({ setFullscreenMedia }) => {
                     <img src={editedImage} alt="Edited content" className="max-h-full max-w-full object-contain rounded-md" />
                 ) : (
                     <p className="text-gray-500 dark:text-gray-400 text-center">
-                        {uploadedImage 
+                        {uploadedFiles.length > 0
                             ? "Your edited image will appear here." 
                             : "Upload an image using the attachment button above to get started."}
                     </p>
